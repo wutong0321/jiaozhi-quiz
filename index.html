@@ -352,6 +352,43 @@
     color: var(--color-muted-foreground);
     margin-top: 2px;
   }
+  .acc-row {
+    display: grid;
+    grid-template-columns: 72px 1fr 88px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .acc-label { font-size: var(--text-sm); color: var(--color-muted-foreground); }
+  .acc-bar {
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--color-muted);
+    overflow: hidden;
+  }
+  .acc-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-secondary), var(--color-primary));
+    border-radius: var(--radius-pill);
+  }
+  .acc-fill.soft {
+    background: linear-gradient(90deg, #FBBF24, var(--color-accent));
+  }
+  .acc-num {
+    font-size: var(--text-xs);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .weak-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .weak-row:last-child { border-bottom: 0; }
+  .weak-name { font-size: var(--text-base); font-weight: 550; }
   .result-line {
     display: flex;
     align-items: center;
@@ -443,12 +480,26 @@
     return Array.isArray(window.BANK) && window.BANK.length > 0;
   }
 
+  function emptyStats() {
+    return {
+      answered: 0,
+      correct: 0,
+      bySubject: {
+        edu: { answered: 0, correct: 0 },
+        psy: { answered: 0, correct: 0 },
+        law: { answered: 0, correct: 0 },
+      },
+      keyPoints: {},
+    };
+  }
+
   function emptyState() {
     return {
       wrong: [],
       progress: {},
       exams: [],
       settings: { autoRemoveWrong: false },
+      stats: emptyStats(),
     };
   }
 
@@ -457,12 +508,19 @@
       const raw = localStorage.getItem(STATE_KEY);
       if (!raw) return emptyState();
       const s = JSON.parse(raw);
+      const base = emptyState();
       return {
         wrong: Array.isArray(s.wrong) ? s.wrong : [],
         progress: s.progress || {},
         exams: Array.isArray(s.exams) ? s.exams.slice(0, 20) : [],
         settings: {
           autoRemoveWrong: !!((s.settings || {}).autoRemoveWrong),
+        },
+        stats: {
+          answered: (s.stats && s.stats.answered) || 0,
+          correct: (s.stats && s.stats.correct) || 0,
+          bySubject: Object.assign(base.stats.bySubject, (s.stats && s.stats.bySubject) || {}),
+          keyPoints: (s.stats && s.stats.keyPoints) || {},
         },
       };
     } catch (e) {
@@ -471,6 +529,26 @@
       } catch (e2) {}
       return emptyState();
     }
+  }
+
+  function recordAttempt(state, q, ok) {
+    if (!state.stats) state.stats = emptyStats();
+    const st = state.stats;
+    st.answered += 1;
+    if (ok) st.correct += 1;
+    const sub = q.subject in st.bySubject ? q.subject : "edu";
+    if (!st.bySubject[sub]) st.bySubject[sub] = { answered: 0, correct: 0 };
+    st.bySubject[sub].answered += 1;
+    if (ok) st.bySubject[sub].correct += 1;
+    const kp = (q.keyPoint || "未分类").trim() || "未分类";
+    if (!st.keyPoints[kp]) st.keyPoints[kp] = { answered: 0, wrong: 0 };
+    st.keyPoints[kp].answered += 1;
+    if (!ok) st.keyPoints[kp].wrong += 1;
+  }
+
+  function saveSeqProgress(state, subject, idx) {
+    if (subject === "all") return;
+    state.progress[subject] = idx;
   }
 
   function saveState(state) {
@@ -584,7 +662,21 @@
   }
 
   function startSeq(subject) {
-    startSession(filterBySubject(subject), subject, "顺序");
+    const list = filterBySubject(subject);
+    const saved = (JZ.loadState().progress || {})[subject];
+    const session = {
+      list: list,
+      idx: 0,
+      subject: subject,
+      modeLabel: "顺序",
+      selected: [],
+      locked: false,
+    };
+    if (saved && saved > 0 && saved < list.length) {
+      session.idx = saved;
+    }
+    practiceSession = session;
+    JZ.showTab("practice");
   }
 
   function startRand(subject) {
@@ -734,6 +826,10 @@
     });
     if (!ok) addWrong(state, q);
     else if (state.settings.autoRemoveWrong) removeWrong(state, q.uid);
+    recordAttempt(state, q, ok);
+    if (s.modeLabel === "顺序" || s.modeLabel === "顺序刷题") {
+      saveSeqProgress(state, s.subject, s.idx + 1);
+    }
     JZ.saveState(state);
     const actions = document.getElementById("actions");
     actions.innerHTML =
@@ -1116,11 +1212,13 @@
     s.submitted = true;
     if (s.timer) clearInterval(s.timer);
     let right = 0;
+    const state = JZ.loadState();
     s.list.forEach((q) => {
       const ok = JZ.scoreAnswer(q.type, s.answers[q.uid] || [], q.answer);
       if (ok) right += 1;
+      recordAttempt(state, q, ok);
+      if (!ok) addWrong(state, q);
     });
-    const state = JZ.loadState();
     state.exams.unshift({
       at: new Date().toISOString().slice(0, 16).replace("T", " "),
       right: right,
@@ -1190,31 +1288,118 @@
     });
   }
 
+  function pct(n, d) {
+    if (!d) return "—";
+    return Math.round((n / d) * 100) + "%";
+  }
+
+  function weakKeyPoints(stats, limit) {
+    const list = Object.keys(stats.keyPoints || {}).map((k) => ({
+      name: k,
+      wrong: stats.keyPoints[k].wrong || 0,
+      answered: stats.keyPoints[k].answered || 0,
+    }));
+    return list
+      .filter((x) => x.wrong > 0)
+      .sort((a, b) => b.wrong - a.wrong || b.answered - a.answered)
+      .slice(0, limit || 8);
+  }
+
   function renderMe(main) {
     const state = JZ.loadState();
     const total = window.BANK.length;
+    const st = state.stats || emptyStats();
+    const weak = weakKeyPoints(st, 8);
+    const subRows = ["edu", "psy", "law"]
+      .map((s) => {
+        const row = st.bySubject[s] || { answered: 0, correct: 0 };
+        const p = row.answered ? Math.round((row.correct / row.answered) * 100) : 0;
+        return (
+          '<div class="acc-row"><div class="acc-label">' +
+          subjName[s] +
+          '</div><div class="acc-bar"><div class="acc-fill" style="width:' +
+          p +
+          '%"></div></div><div class="acc-num">' +
+          pct(row.correct, row.answered) +
+          '<span class="muted"> ' +
+          row.correct +
+          "/" +
+          row.answered +
+          "</span></div></div>"
+        );
+      })
+      .join("");
+    const progRows = ["edu", "psy", "law"]
+      .map((s) => {
+        const bankN = filterBySubject(s).length;
+        const done = (state.progress || {})[s] || 0;
+        const p = bankN ? Math.min(100, Math.round((done / bankN) * 100)) : 0;
+        return (
+          '<div class="acc-row"><div class="acc-label">' +
+          subjName[s] +
+          '</div><div class="acc-bar"><div class="acc-fill soft" style="width:' +
+          p +
+          '%"></div></div><div class="acc-num">' +
+          done +
+          "/" +
+          bankN +
+          "</div></div>"
+        );
+      })
+      .join("");
     main.innerHTML =
       '<div class="card"><h2>' +
       icon("user", "icon-sm") +
-      ' 我的</h2>' +
+      ' 学习数据</h2>' +
+      '<div class="stat-grid"><div class="stat"><div class="n">' +
+      st.answered +
+      '</div><div class="l">已作答</div></div><div class="stat"><div class="n">' +
+      pct(st.correct, st.answered) +
+      '</div><div class="l">总正确率</div></div><div class="stat"><div class="n">' +
+      state.wrong.length +
+      '</div><div class="l">错题</div></div></div>' +
+      '<h2 style="margin-top:16px">分科正确率</h2>' +
+      subRows +
+      '<h2 style="margin-top:16px">顺序进度</h2>' +
+      progRows +
+      "</div>" +
+      '<div class="card"><h2>' +
+      icon("pencil", "icon-sm") +
+      ' 薄弱知识点</h2>' +
+      (weak.length
+        ? weak
+            .map(
+              (w) =>
+                '<div class="weak-row"><div><div class="weak-name">' +
+                escapeHtml(w.name) +
+                '</div><div class="muted">错 ' +
+                w.wrong +
+                " / 做 " +
+                w.answered +
+                '</div></div><span class="badge gold">优先复习</span></div>'
+            )
+            .join("")
+        : '<p class="muted">暂无错题知识点，多刷几题就会出现。</p>') +
+      "</div>" +
+      '<div class="card"><h2>题库与设置</h2>' +
       '<div class="stat-grid"><div class="stat"><div class="n">' +
       total +
       '</div><div class="l">题库</div></div><div class="stat"><div class="n">' +
-      state.wrong.length +
-      '</div><div class="l">错题</div></div><div class="stat"><div class="n">' +
       state.exams.length +
-      '</div><div class="l">模考</div></div></div>' +
+      '</div><div class="l">模考</div></div><div class="stat"><div class="n">' +
+      state.wrong.length +
+      '</div><div class="l">错题本</div></div></div>' +
       '<p class="muted" style="margin-top:12px">多选计分：全对才算对（固定）</p>' +
       '<label><input type="checkbox" id="autoOff" ' +
       (state.settings.autoRemoveWrong ? "checked" : "") +
       " /> 错题做对后自动移出</label>" +
-      '<div class="row"><button type="button" class="btn danger" id="clearAll">清空进度与错题</button></div></div>';
+      '<div class="row"><button type="button" class="btn danger" id="clearAll">清空进度与数据</button></div></div>';
     document.getElementById("autoOff").addEventListener("change", (e) => {
       state.settings.autoRemoveWrong = e.target.checked;
       JZ.saveState(state);
     });
     document.getElementById("clearAll").addEventListener("click", () => {
-      if (!confirm("确认清空错题与进度？")) return;
+      if (!confirm("确认清空错题、进度与学习数据？")) return;
       const s = emptyState();
       s.settings = state.settings;
       JZ.saveState(s);
