@@ -389,6 +389,68 @@
   }
   .weak-row:last-child { border-bottom: 0; }
   .weak-name { font-size: var(--text-base); font-weight: 550; }
+
+  .exam-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .exam-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    color: var(--color-accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: var(--text-md);
+  }
+  .exam-clock.warn {
+    background: var(--color-red-50);
+    border-color: #FECACA;
+    color: var(--color-destructive);
+  }
+  .exam-progress-text {
+    font-size: var(--text-xs);
+    color: var(--color-muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .sheet {
+    margin-top: 12px;
+  }
+  .sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+  }
+  .sheet-cell {
+    aspect-ratio: 1;
+    min-height: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-card);
+    font-size: 11px;
+    display: grid;
+    place-items: center;
+    color: var(--color-muted-foreground);
+    padding: 0;
+  }
+  .sheet-cell.answered {
+    background: var(--color-muted);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    font-weight: 650;
+  }
+  .sheet-cell.current {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 1px;
+  }
   .result-line {
     display: flex;
     align-items: center;
@@ -1091,6 +1153,52 @@
     drawExam(main);
   }
 
+  function fmtClock(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ":" + String(s).padStart(2, "0");
+  }
+
+  function answeredCount(session) {
+    let n = 0;
+    session.list.forEach((q) => {
+      const a = session.answers[q.uid];
+      if (a && a.length) n += 1;
+    });
+    return n;
+  }
+
+  function renderAnswerSheet(s, main) {
+    const sheet = document.getElementById("exSheet");
+    if (!sheet) return;
+    sheet.innerHTML = s.list
+      .map((q, i) => {
+        const a = s.answers[q.uid];
+        const cls =
+          "sheet-cell" +
+          (a && a.length ? " answered" : "") +
+          (i === s.idx ? " current" : "");
+        return (
+          '<button type="button" class="' +
+          cls +
+          '" data-i="' +
+          i +
+          '" aria-label="第 ' +
+          (i + 1) +
+          ' 题">' +
+          (i + 1) +
+          "</button>"
+        );
+      })
+      .join("");
+    sheet.querySelectorAll("[data-i]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        s.idx = parseInt(btn.dataset.i, 10);
+        drawExam(document.getElementById("main"));
+      });
+    });
+  }
+
   function drawExam(main) {
     const s = examSession;
     if (!s || s.submitted) return drawExamResult(main);
@@ -1098,30 +1206,38 @@
     const left = s.deadline
       ? Math.max(0, Math.floor((s.deadline - Date.now()) / 1000))
       : null;
-    const timeTxt =
-      left == null
-        ? "不限时"
-        : "剩余 " +
-          Math.floor(left / 60) +
-          ":" +
-          String(left % 60).padStart(2, "0");
+    const done = answeredCount(s);
     main.innerHTML =
-      '<div class="card"><div class="qhead"><div><span class="badge accent">' +
+      '<div class="card">' +
+      '<div class="exam-bar"><div class="exam-clock' +
+      (left != null && left < 300 ? " warn" : "") +
+      '" id="exClock">' +
+      icon("clock", "icon-sm") +
+      (left == null ? "不限时" : fmtClock(left)) +
+      '</div><div class="exam-progress-text">' +
+      done +
+      "/" +
+      s.list.length +
+      " 已答 · 第 " +
+      (s.idx + 1) +
+      " 题</div></div>" +
+      '<div><span class="badge accent">' +
       (TYPE_LABEL[q.type] || "") +
       '</span><span class="badge">' +
       s.modeLabel +
-      '</span></div><div class="qindex" id="exClock">' +
-      (s.idx + 1) +
-      "/" +
-      s.list.length +
-      " · " +
-      timeTxt +
-      '</div></div><div class="stem">' +
+      "</span></div>" +
+      '<div class="progress-track"><div class="progress-fill" style="width:' +
+      Math.round((done / s.list.length) * 100) +
+      '%"></div></div>' +
+      '<div class="stem">' +
       escapeHtml(q.stem) +
       '</div><div id="opts"></div><div class="row">' +
       '<button type="button" class="btn ghost" id="exPrev">上一题</button>' +
       '<button type="button" class="btn ghost" id="exNext">下一题</button>' +
-      '<button type="button" class="btn" id="exSubmit">交卷</button></div></div>';
+      '<button type="button" class="btn" id="exSubmit">交卷</button></div>' +
+      '<div class="sheet"><h2>答题卡</h2><div class="sheet-grid" id="exSheet"></div></div>' +
+      "</div>";
+    renderAnswerSheet(s, main);
     const opts = document.getElementById("opts");
     const choices =
       q.type === "judge"
@@ -1164,6 +1280,22 @@
           btn.classList.add("selected");
         }
         s.answers[q.uid] = cur;
+        renderAnswerSheet(s, main);
+        const pt = document.querySelector(".exam-progress-text");
+        if (pt) {
+          pt.textContent =
+            answeredCount(s) +
+            "/" +
+            s.list.length +
+            " 已答 · 第 " +
+            (s.idx + 1) +
+            " 题";
+        }
+        const fill = document.querySelector(".progress-fill");
+        if (fill) {
+          fill.style.width =
+            Math.round((answeredCount(s) / s.list.length) * 100) + "%";
+        }
       });
     });
     document.getElementById("exPrev").addEventListener("click", () => {
@@ -1174,9 +1306,15 @@
       if (s.idx < s.list.length - 1) s.idx += 1;
       drawExam(main);
     });
-    document
-      .getElementById("exSubmit")
-      .addEventListener("click", () => submitExam(main, false));
+    document.getElementById("exSubmit").addEventListener("click", () => {
+      const remain = s.list.length - answeredCount(s);
+      const msg =
+        remain > 0
+          ? "还有 " + remain + " 题未作答，确认交卷？"
+          : "确认交卷？交卷后不可修改答案。";
+      if (!confirm(msg)) return;
+      submitExam(main, false);
+    });
     if (s.deadline) {
       if (s.timer) clearInterval(s.timer);
       s.timer = setInterval(() => {
@@ -1186,20 +1324,15 @@
           submitExam(document.getElementById("main"), true);
         } else {
           const el = document.getElementById("exClock");
-          if (el && s.list[s.idx]) {
+          if (el) {
             const sec = Math.max(
               0,
               Math.floor((s.deadline - Date.now()) / 1000)
             );
-            el.textContent =
-              s.idx +
-              1 +
-              "/" +
-              s.list.length +
-              " · 剩余 " +
-              Math.floor(sec / 60) +
-              ":" +
-              String(sec % 60).padStart(2, "0");
+            el.innerHTML =
+              '<svg class="icon icon-sm" aria-hidden="true"><use href="#i-clock"/></svg>' +
+              fmtClock(sec);
+            el.classList.toggle("warn", sec < 300);
           }
         }
       }, 1000);
