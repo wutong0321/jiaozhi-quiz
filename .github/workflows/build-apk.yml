@@ -1,0 +1,55 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "android/**"
+      - "index.html"
+      - "bank.js"
+      - "assets/**"
+      - "manifest.json"
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Sync web assets into WebView
+        run: |
+          mkdir -p android/app/src/main/assets/www/assets/icons
+          cp index.html bank.js manifest.json android/app/src/main/assets/www/
+          cp assets/design-tokens.css android/app/src/main/assets/www/assets/
+          cp assets/empty-state.png android/app/src/main/assets/www/assets/ 2>/dev/null || true
+          cp assets/icons/icon-192.png assets/icons/icon-512.png assets/icons/apple-touch-icon.png \
+            android/app/src/main/assets/www/assets/icons/
+          # file:// 下不依赖 service worker，避免安装异常
+          rm -f android/app/src/main/assets/www/sw.js
+
+      - name: Grant execute for gradlew
+        run: |
+          if [ -f android/gradlew ]; then chmod +x android/gradlew; fi
+
+      - name: Build debug APK
+        uses: android-actions/setup-android@v3
+
+      - name: Build with Gradle
+        working-directory: android
+        run: |
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.5
+          fi
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiaozhi-quiz-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
