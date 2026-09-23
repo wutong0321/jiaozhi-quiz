@@ -207,6 +207,27 @@ class TestParse(unittest.TestCase):
                 rep = json.load(f)
             self.assertIn("merged", rep)
 
+    def test_bank_entry_fields(self):
+        from build_bank import join_answers, load_exercise, normalize_question
+
+        ex = load_exercise(FIXTURE)
+        meta = {"exerciseId": ex["exerciseId"], "exerciseName": ex["exerciseName"]}
+        q = normalize_question(join_answers(ex)[0], "edu", meta)
+        for field in (
+            "uid",
+            "sourceOldId",
+            "subject",
+            "type",
+            "stem",
+            "options",
+            "answer",
+            "keyPoint",
+            "difficulty",
+            "importance",
+            "sources",
+        ):
+            self.assertIn(field, q)
+
 
 if __name__ == "__main__":
     unittest.main()
