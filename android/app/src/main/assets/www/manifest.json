@@ -1,7 +1,7 @@
 {
-  "name": "教资刷题",
-  "short_name": "教资刷题",
-  "description": "高校教师资格考试三科刷题：顺序、随机、错题本、模拟考",
+  "name": "河北省高校教资刷题",
+  "short_name": "冀教资刷题",
+  "description": "河北省高校教师资格考试三科刷题：顺序、随机、错题本、模拟考",
   "lang": "zh-CN",
   "start_url": "./index.html",
   "scope": "./",
