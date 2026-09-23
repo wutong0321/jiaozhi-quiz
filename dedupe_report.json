@@ -1,0 +1,552 @@
+{
+  "merged": 3653,
+  "conflicts": [],
+  "dropped_no_uid": 0,
+  "files": [
+    {
+      "file": "edu_01_高等教育学(1学时==45分钟)-练习01.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_02_高等教育学(1学时==45分钟)-练习02.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_03_高等教育学(1学时==45分钟)-练习03.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_04_高等教育学(1学时==45分钟)-练习04.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_05_高等教育学(1学时==45分钟)-练习05.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_06_高等教育学(1学时==45分钟)-练习06.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_07_高等教育学(1学时==45分钟)-练习07.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_08_高等教育学(1学时==45分钟)-练习08.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_09_高等教育学(1学时==45分钟)-练习09.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_10_高等教育学(1学时==45分钟)-练习10.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_11_高等教育学(1学时==45分钟)-练习11.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_12_高等教育学(1学时==45分钟)-练习12.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_13_高等教育学(1学时==45分钟)-练习13.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_14_高等教育学(1学时==45分钟)-练习14.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_15_高等教育学(1学时==45分钟)-练习15.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_16_高等教育学(1学时==45分钟)-练习16.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_17_高等教育学(1学时==45分钟)-练习17.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_18_高等教育学(1学时==45分钟)-练习18.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_19_高等教育学(1学时==45分钟)-练习19.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_20_高等教育学(1学时==45分钟)-练习20.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_21_高等教育学(1学时==45分钟)-练习21.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_22_高等教育学(1学时==45分钟)-练习22.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_23_高等教育学(1学时==45分钟)-练习23.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_24_高等教育学(1学时==45分钟)-练习24.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_25_高等教育学(1学时==45分钟)-练习25.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_26_高等教育学(1学时==45分钟)-练习26.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_27_高等教育学(1学时==45分钟)-练习27.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_28_高等教育学(1学时==45分钟)-练习28.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_29_高等教育学(1学时==45分钟)-练习29.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "edu_30_高等教育学(1学时==45分钟)-练习30.json",
+      "subject": "edu",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "law_01_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习01.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_02_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习02.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_03_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习03.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_04_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习04.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_05_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习05.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_06_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习06.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_07_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习07.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_08_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习08.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_09_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习09.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_10_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习10.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_11_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习11.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_12_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习12.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_13_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习13.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_14_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习14.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_15_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习15.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_16_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习16.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_17_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习17.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_18_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习18.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_19_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习19.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_20_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习20.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_21_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习21.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_22_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习22.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_23_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习23.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_24_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习24.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_25_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习25.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_26_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习26.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_27_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习27.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_28_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习28.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_29_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习29.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "law_30_高校教师职业道德修养和高等教育法规(1学时==45分钟)-练习30.json",
+      "subject": "law",
+      "rows": 45,
+      "kept": 45
+    },
+    {
+      "file": "psy_01_高等教育心理学(1学时==45分钟)-练习01.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_02_高等教育心理学(1学时==45分钟)-练习02.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_03_高等教育心理学(1学时==45分钟)-练习03.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_04_高等教育心理学(1学时==45分钟)-练习04.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_05_高等教育心理学(1学时==45分钟)-练习05.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_06_高等教育心理学(1学时==45分钟)-练习06.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_07_高等教育心理学(1学时==45分钟)-练习07.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_08_高等教育心理学(1学时==45分钟)-练习08.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_09_高等教育心理学(1学时==45分钟)-练习09.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_10_高等教育心理学(1学时==45分钟)-练习10.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_11_高等教育心理学(1学时==45分钟)-练习11.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_12_高等教育心理学(1学时==45分钟)-练习12.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_13_高等教育心理学(1学时==45分钟)-练习13.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_14_高等教育心理学(1学时==45分钟)-练习14.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_15_高等教育心理学(1学时==45分钟)-练习15.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_16_高等教育心理学(1学时==45分钟)-练习16.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_17_高等教育心理学(1学时==45分钟)-练习17.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_18_高等教育心理学(1学时==45分钟)-练习18.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_19_高等教育心理学(1学时==45分钟)-练习19.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_20_高等教育心理学(1学时==45分钟)-练习20.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_21_高等教育心理学(1学时==45分钟)-练习21.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_22_高等教育心理学(1学时==45分钟)-练习22.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_23_高等教育心理学(1学时==45分钟)-练习23.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_24_高等教育心理学(1学时==45分钟)-练习24.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_25_高等教育心理学(1学时==45分钟)-练习25.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_26_高等教育心理学(1学时==45分钟)-练习26.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_27_高等教育心理学(1学时==45分钟)-练习27.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_28_高等教育心理学(1学时==45分钟)-练习28.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_29_高等教育心理学(1学时==45分钟)-练习29.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    },
+    {
+      "file": "psy_30_高等教育心理学(1学时==45分钟)-练习30.json",
+      "subject": "psy",
+      "rows": 80,
+      "kept": 80
+    }
+  ],
+  "by_subject": {
+    "edu": 915,
+    "law": 599,
+    "psy": 983
+  }
+}
