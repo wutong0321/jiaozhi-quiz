@@ -205,3 +205,94 @@ def dedupe(items: list[dict]) -> tuple[list[dict], dict]:
             by_old[key_old] = stored
 
     return ordered, report
+
+
+SUBJECT_PREFIX = {"edu": "edu", "psy": "psy", "law": "law"}
+
+
+def infer_subject(path: str, exercise: dict) -> str:
+    name = os.path.basename(path).lower()
+    for p, subj in SUBJECT_PREFIX.items():
+        if name.startswith(p + "_") or name.startswith(p + "-"):
+            return subj
+    hay = f"{exercise.get('exerciseName') or ''} {exercise.get('courseId') or ''}"
+    if "心理" in hay or "psy" in hay.lower():
+        return "psy"
+    if "法规" in hay or "道德" in hay or "law" in hay.lower():
+        return "law"
+    if "教育学" in hay or "高教" in hay:
+        return "edu"
+    return "unknown"
+
+
+def emit_bank_js(items: list[dict], path: str) -> None:
+    payload = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("window.BANK = ")
+        f.write(payload)
+        f.write(";\n")
+
+
+def emit_report(report: dict, path: str) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+
+
+def build(raw_dir: str, bank_path: str, report_path: str) -> dict:
+    items: list[dict] = []
+    files_stats = []
+    for name in sorted(os.listdir(raw_dir)):
+        if not name.lower().endswith(".json"):
+            continue
+        if name.startswith("_"):
+            continue
+        path = os.path.join(raw_dir, name)
+        if not os.path.isfile(path):
+            continue
+        try:
+            ex = load_exercise(path)
+        except Exception as e:
+            files_stats.append({"file": name, "error": str(e)})
+            continue
+        subject = infer_subject(name, ex)
+        meta = {"exerciseId": ex.get("exerciseId"), "exerciseName": ex.get("exerciseName")}
+        rows = join_answers(ex)
+        kept = 0
+        for row in rows:
+            q = normalize_question(row, subject, meta)
+            if q is None:
+                continue
+            items.append(q)
+            kept += 1
+        files_stats.append({"file": name, "subject": subject, "rows": len(rows), "kept": kept})
+
+    bank, report = dedupe(items)
+    report["files"] = files_stats
+    report["by_subject"] = {}
+    for q in bank:
+        report["by_subject"][q["subject"]] = report["by_subject"].get(q["subject"], 0) + 1
+    emit_bank_js(bank, bank_path)
+    emit_report(report, report_path)
+    return {
+        "files": len(files_stats),
+        "parsed": len(items),
+        "bank_size": len(bank),
+        "merged": report.get("merged", 0),
+        "conflicts": len(report.get("conflicts") or []),
+        "by_subject": report["by_subject"],
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(description="Build unique bank.js from raw exercises")
+    p.add_argument("--raw", default="raw")
+    p.add_argument("--bank", default="bank.js")
+    p.add_argument("--report", default="dedupe_report.json")
+    args = p.parse_args(argv)
+    stats = build(args.raw, args.bank, args.report)
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

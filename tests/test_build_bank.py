@@ -176,6 +176,37 @@ class TestParse(unittest.TestCase):
         self.assertEqual(len(report["conflicts"]), 1)
         self.assertEqual(report["conflicts"][0]["reason"], "answer_or_fields_differ")
 
+    def test_infer_subject_from_filename(self):
+        from build_bank import infer_subject
+
+        self.assertEqual(infer_subject("edu_练习01.json", {}), "edu")
+        self.assertEqual(infer_subject("psy_练习02.json", {}), "psy")
+        self.assertEqual(infer_subject("law_练习03.json", {}), "law")
+        self.assertEqual(
+            infer_subject("x.json", {"exerciseName": "高等教育心理学-练习01"}), "psy"
+        )
+
+    def test_build_end_to_end_on_fixture_dir(self):
+        import shutil as _sh
+        import tempfile
+        from build_bank import build
+
+        with tempfile.TemporaryDirectory() as td:
+            raw_dir = os.path.join(td, "raw")
+            os.makedirs(raw_dir)
+            _sh.copy(FIXTURE, os.path.join(raw_dir, "edu_练习FIX.json"))
+            bank_path = os.path.join(td, "bank.js")
+            report_path = os.path.join(td, "dedupe_report.json")
+            stats = build(raw_dir, bank_path, report_path)
+            self.assertEqual(stats["bank_size"], 3)
+            with open(bank_path, "r", encoding="utf-8") as f:
+                text = f.read()
+            self.assertIn("window.BANK", text)
+            self.assertIn("old:27183", text)
+            with open(report_path, "r", encoding="utf-8") as f:
+                rep = json.load(f)
+            self.assertIn("merged", rep)
+
 
 if __name__ == "__main__":
     unittest.main()
