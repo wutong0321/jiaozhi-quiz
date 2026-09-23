@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>教资刷题</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1c2430;
+    --muted: #5c6675;
+    --accent: #0f6b4c;
+    --accent-ink: #f4f1ea;
+    --danger: #b33a3a;
+    --ok: #1f7a4c;
+    --card: #ffffff;
+    --line: #d9d2c5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 72px;
+  }
+  header {
+    padding: 14px 16px 8px;
+    border-bottom: 1px solid var(--line);
+    background: var(--card);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  header h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  main { padding: 12px 16px 24px; max-width: 480px; margin: 0 auto; }
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--card); border-top: 1px solid var(--line);
+  }
+  nav button {
+    border: 0; background: transparent; padding: 10px 0 12px;
+    font-size: 12px; color: var(--muted); cursor: pointer;
+  }
+  nav button.active { color: var(--accent); font-weight: 600; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px; margin-bottom: 12px;
+  }
+  .muted { color: var(--muted); font-size: 13px; }
+  .btn {
+    display: inline-block; border: 0; border-radius: 10px;
+    background: var(--accent); color: var(--accent-ink);
+    padding: 10px 14px; font-size: 14px; cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn.danger { background: var(--danger); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+  .opt {
+    display: block; width: 100%; text-align: left;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--card); padding: 12px; margin-bottom: 8px;
+    font-size: 15px; cursor: pointer;
+  }
+  .opt.selected { border-color: var(--accent); }
+  .opt.correct { border-color: var(--ok); background: #e8f6ee; }
+  .opt.wrong { border-color: var(--danger); background: #f8ecec; }
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 999px; background: var(--bg); color: var(--muted);
+    border: 1px solid var(--line); margin-right: 6px;
+  }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  .stem { font-size: 16px; line-height: 1.55; margin: 8px 0 12px; }
+  .hidden { display: none !important; }
+  label { font-size: 14px; }
+  select, input[type="number"] {
+    font-size: 14px; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--card); color: var(--ink);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>教资刷题</h1>
+  <div class="muted" id="bankMeta">加载题库…</div>
+</header>
+<main id="main"></main>
+<nav id="tabbar">
+  <button data-tab="practice" class="active">刷题</button>
+  <button data-tab="wrong">错题</button>
+  <button data-tab="exam">模考</button>
+  <button data-tab="me">我的</button>
+</nav>
+<script src="bank.js"></script>
+<script>
+(function () {
+  const STATE_KEY = "jiaozhi_v1";
+  const TYPE_LABEL = { single: "单选", multiple: "多选", judge: "判断" };
+  const subjName = {
+    edu: "高等教育学",
+    psy: "高等教育心理学",
+    law: "职业道德与法规",
+    unknown: "其他",
+  };
+
+  let practiceSession = null;
+  let examSession = null;
+
+  function bankReady() {
+    return Array.isArray(window.BANK) && window.BANK.length > 0;
+  }
+
+  function emptyState() {
+    return {
+      wrong: [],
+      progress: {},
+      exams: [],
+      settings: { autoRemoveWrong: false },
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (!raw) return emptyState();
+      const s = JSON.parse(raw);
+      return {
+        wrong: Array.isArray(s.wrong) ? s.wrong : [],
+        progress: s.progress || {},
+        exams: Array.isArray(s.exams) ? s.exams.slice(0, 20) : [],
+        settings: {
+          autoRemoveWrong: !!((s.settings || {}).autoRemoveWrong),
+        },
+      };
+    } catch (e) {
+      try {
+        localStorage.removeItem(STATE_KEY);
+      } catch (e2) {}
+      return emptyState();
+    }
+  }
+
+  function saveState(state) {
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+      alert("进度保存失败，已尝试继续");
+    }
+  }
+
+  function scoreAnswer(type, userAnswer, keyAnswer) {
+    const u = (userAnswer || []).slice().sort().join(",");
+    const k = (keyAnswer || []).slice().sort().join(",");
+    return u === k && u.length > 0;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  }
+
+  function pickRandom(list, n) {
+    const arr = list.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr.slice(0, Math.max(0, n));
+  }
+
+  function filterBySubject(subject) {
+    if (!subject || subject === "all") return window.BANK.slice();
+    return window.BANK.filter((q) => q.subject === subject);
+  }
+
+  function addWrong(state, q) {
+    if (state.wrong.indexOf(q.uid) < 0) state.wrong.push(q.uid);
+  }
+
+  function removeWrong(state, uid) {
+    state.wrong = state.wrong.filter((x) => x !== uid);
+  }
+
+  function showTab(name) {
+    document.querySelectorAll("#tabbar button").forEach((b) => {
+      b.classList.toggle("active", b.dataset.tab === name);
+    });
+    render(name);
+  }
+
+  function render(tab) {
+    const main = document.getElementById("main");
+    const meta = document.getElementById("bankMeta");
+    if (!bankReady()) {
+      meta.textContent = "题库未就绪";
+      main.innerHTML =
+        '<div class="card"><h2>题库未就绪</h2><p class="muted">请先生成 bank.js 再使用刷题功能。</p></div>';
+      return;
+    }
+    meta.textContent =
+      "题库 " +
+      window.BANK.length +
+      " 题 · 高教 " +
+      filterBySubject("edu").length +
+      " · 心理 " +
+      filterBySubject("psy").length +
+      " · 法规 " +
+      filterBySubject("law").length;
+    if (tab === "practice") renderPractice(main);
+    else if (tab === "wrong") renderWrong(main);
+    else if (tab === "exam") renderExam(main);
+    else renderMe(main);
+  }
+
+  function startSession(list, subject, modeLabel) {
+    if (!list.length) {
+      alert("该科暂无题");
+      return;
+    }
+    practiceSession = {
+      list: list.slice(),
+      idx: 0,
+      subject: subject,
+      modeLabel: modeLabel,
+      selected: [],
+      locked: false,
+    };
+    JZ.showTab("practice");
+  }
+
+  function startSeq(subject) {
+    startSession(filterBySubject(subject), subject, "顺序");
+  }
+
+  function startRand(subject) {
+    const main = document.getElementById("main");
+    const base = filterBySubject(subject);
+    main.innerHTML =
+      '<div class="card"><h2>随机抽题</h2>' +
+      '<p class="muted">科目：' +
+      (subject === "all" ? "全部" : subjName[subject] || subject) +
+      " · 池内 " +
+      base.length +
+      " 题</p>" +
+      '<label>题量 <select id="randN"><option>10</option><option selected>20</option><option>50</option><option value="custom">自定义</option></select></label> ' +
+      '<input id="randCustom" class="hidden" type="number" min="1" placeholder="N" style="width:72px" />' +
+      '<div class="row"><label><input type="checkbox" data-type="single" checked /> 单选</label>' +
+      '<label><input type="checkbox" data-type="multiple" checked /> 多选</label>' +
+      '<label><input type="checkbox" data-type="judge" checked /> 判断</label></div>' +
+      '<div class="row"><button class="btn" id="randGo">开始</button>' +
+      '<button class="btn ghost" id="randBack">返回</button></div></div>';
+    const nSel = document.getElementById("randN");
+    const nCustom = document.getElementById("randCustom");
+    nSel.addEventListener("change", () =>
+      nCustom.classList.toggle("hidden", nSel.value !== "custom")
+    );
+    document.getElementById("randBack").addEventListener("click", () => {
+      practiceSession = null;
+      JZ.showTab("practice");
+    });
+    document.getElementById("randGo").addEventListener("click", () => {
+      const types = Array.from(
+        main.querySelectorAll("input[data-type]:checked")
+      ).map((x) => x.dataset.type);
+      let n =
+        nSel.value === "custom"
+          ? parseInt(nCustom.value || "0", 10)
+          : parseInt(nSel.value, 10);
+      const pool = base.filter((q) => types.indexOf(q.type) >= 0);
+      if (!n || n < 1) n = Math.min(20, pool.length);
+      startSession(pickRandom(pool, n), subject, "随机");
+    });
+  }
+
+  function renderPractice(main) {
+    const state = JZ.loadState();
+    if (!practiceSession) {
+      const cards = ["edu", "psy", "law"]
+        .map((s) => {
+          const n = filterBySubject(s).length;
+          return (
+            '<div class="card"><h2>' +
+            subjName[s] +
+            '</h2><p class="muted">' +
+            n +
+            ' 题</p><div class="row">' +
+            '<button class="btn" data-go="seq" data-subject="' +
+            s +
+            '">顺序刷题</button>' +
+            '<button class="btn ghost" data-go="rand" data-subject="' +
+            s +
+            '">随机抽题</button></div></div>'
+          );
+        })
+        .join("");
+      main.innerHTML =
+        cards +
+        '<div class="card"><div class="row">' +
+        '<button class="btn ghost" data-go="rand" data-subject="all">全部科目随机</button>' +
+        "</div></div>";
+      main.querySelectorAll("[data-go]").forEach((b) => {
+        b.addEventListener("click", () => {
+          if (b.dataset.go === "seq") startSeq(b.dataset.subject);
+          else startRand(b.dataset.subject);
+        });
+      });
+      return;
+    }
+    drawQuestion(main, state);
+  }
+
+  function renderOptions(container, q, options) {
+    container.innerHTML = options
+      .map(
+        (o) =>
+          '<button type="button" class="opt" data-id="' +
+          o.id +
+          '">' +
+          o.id +
+          ". " +
+          escapeHtml(o.value) +
+          "</button>"
+      )
+      .join("");
+    container.querySelectorAll(".opt").forEach((btn) => {
+      btn.addEventListener("click", () => onPick(btn, q));
+    });
+  }
+
+  function onPick(btn, q) {
+    if (!practiceSession || practiceSession.locked) return;
+    const id = btn.dataset.id;
+    if (q.type === "multiple") {
+      btn.classList.toggle("selected");
+    } else {
+      document
+        .querySelectorAll("#opts .opt")
+        .forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      practiceSession.selected = [id];
+      lockAnswer(document.getElementById("main"), JZ.loadState(), false);
+    }
+  }
+
+  function currentSelected() {
+    return Array.from(document.querySelectorAll("#opts .opt.selected")).map(
+      (b) => b.dataset.id
+    );
+  }
+
+  function lockAnswer(main, state, isMultiple) {
+    const s = practiceSession;
+    if (!s || s.locked) return;
+    const q = s.list[s.idx];
+    const selected = isMultiple ? currentSelected() : s.selected;
+    if (!selected.length) return;
+    s.selected = selected;
+    s.locked = true;
+    const ok = JZ.scoreAnswer(q.type, selected, q.answer);
+    document.querySelectorAll("#opts .opt").forEach((b) => {
+      const id = b.dataset.id;
+      const should = q.answer.indexOf(id) >= 0;
+      if (should) b.classList.add("correct");
+      else if (b.classList.contains("selected")) b.classList.add("wrong");
+      b.disabled = true;
+    });
+    if (!ok) addWrong(state, q);
+    else if (state.settings.autoRemoveWrong) removeWrong(state, q.uid);
+    JZ.saveState(state);
+    const actions = document.getElementById("actions");
+    actions.innerHTML =
+      '<span class="muted">' +
+      (ok ? "答对" : "答错，正确答案 " + q.answer.join("")) +
+      '</span><button class="btn" id="nextBtn">下一题</button>';
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      s.idx += 1;
+      s.selected = [];
+      s.locked = false;
+      JZ.showTab("practice");
+    });
+  }
+
+  function drawQuestion(main, state) {
+    const s = practiceSession;
+    const q = s.list[s.idx];
+    if (!q) {
+      practiceSession = null;
+      renderPractice(main);
+      return;
+    }
+    const typeLabel = TYPE_LABEL[q.type] || q.type;
+    main.innerHTML =
+      '<div class="card">' +
+      '<div><span class="badge">' +
+      typeLabel +
+      '</span><span class="badge">' +
+      s.modeLabel +
+      " " +
+      (s.idx + 1) +
+      "/" +
+      s.list.length +
+      '</span><span class="badge">' +
+      (subjName[q.subject] || q.subject) +
+      '</span></div>' +
+      '<div class="stem">' +
+      escapeHtml(q.stem) +
+      '</div><div id="opts"></div>' +
+      '<div class="row" id="actions">' +
+      '<button class="btn ghost" id="quitBtn">退出</button></div></div>';
+    const opts = document.getElementById("opts");
+    if (q.type === "judge") {
+      renderOptions(opts, q, [
+        { id: "TRUE", value: "正确" },
+        { id: "FALSE", value: "错误" },
+      ]);
+    } else {
+      renderOptions(opts, q, q.options);
+    }
+    const actions = document.getElementById("actions");
+    document.getElementById("quitBtn").addEventListener("click", () => {
+      practiceSession = null;
+      JZ.showTab("practice");
+    });
+    if (q.type === "multiple") {
+      const submit = document.createElement("button");
+      submit.className = "btn";
+      submit.id = "submitBtn";
+      submit.textContent = "提交";
+      actions.appendChild(submit);
+      submit.addEventListener("click", () => lockAnswer(main, state, true));
+    }
+  }
+
+  function renderWrong(main) {
+    const state = JZ.loadState();
+    const all = state.wrong
+      .map((uid) => window.BANK.find((q) => q.uid === uid))
+      .filter(Boolean);
+    const missing = state.wrong.length - all.length;
+    if (missing > 0) {
+      state.wrong = all.map((q) => q.uid);
+      JZ.saveState(state);
+    }
+    let filter = "all";
+    function draw() {
+      const list =
+        filter === "all" ? all : all.filter((q) => q.subject === filter);
+      main.innerHTML =
+        '<div class="card"><h2>错题本</h2><p class="muted">' +
+        all.length +
+        " 题" +
+        (missing ? "（已清理 " + missing + " 条失效）" : "") +
+        '</p><div class="row">' +
+        '<button class="btn ghost" data-f="all">全部</button>' +
+        '<button class="btn ghost" data-f="edu">高教</button>' +
+        '<button class="btn ghost" data-f="psy">心理</button>' +
+        '<button class="btn ghost" data-f="law">道德法规</button>' +
+        '<button class="btn" id="reWrong">重刷 ' +
+        list.length +
+        " 题</button></div></div>" +
+        list
+          .map(
+            (q, i) =>
+              '<div class="card"><div><span class="badge">' +
+              (TYPE_LABEL[q.type] || "") +
+              '</span><span class="badge">' +
+              (subjName[q.subject] || q.subject) +
+              '</span></div><div class="stem">' +
+              escapeHtml(q.stem) +
+              '</div><div class="row"><button class="btn ghost" data-off="' +
+              i +
+              '">移出</button></div></div>'
+          )
+          .join("");
+      main.querySelectorAll("[data-f]").forEach((b) =>
+        b.addEventListener("click", () => {
+          filter = b.dataset.f;
+          draw();
+        })
+      );
+      main.querySelectorAll("[data-off]").forEach((b) =>
+        b.addEventListener("click", () => {
+          const q = list[parseInt(b.dataset.off, 10)];
+          removeWrong(state, q.uid);
+          JZ.saveState(state);
+          renderWrong(main);
+        })
+      );
+      const re = document.getElementById("reWrong");
+      if (re)
+        re.addEventListener("click", () => {
+          if (!list.length) return;
+          startSession(list.slice(), filter, "错题重刷");
+        });
+    }
+    draw();
+  }
+
+  function assemblePaper(bank, opts) {
+    const types =
+      opts.types && opts.types.length
+        ? opts.types
+        : ["single", "multiple", "judge"];
+    const pool = bank.filter(
+      (q) =>
+        types.indexOf(q.type) >= 0 &&
+        (!opts.subject || opts.subject === "all" || q.subject === opts.subject)
+    );
+    if (opts.mode === "randomN") {
+      return pickRandom(pool, opts.n || 20);
+    }
+    const quota = { single: 40, multiple: 20, judge: 20 };
+    const picked = [];
+    const used = new Set();
+    const lack = [];
+    ["single", "multiple", "judge"].forEach((t) => {
+      if (types.indexOf(t) < 0) return;
+      const seg = pickRandom(
+        pool.filter((q) => q.type === t && !used.has(q.uid)),
+        quota[t]
+      );
+      seg.forEach((q) => {
+        used.add(q.uid);
+        picked.push(q);
+      });
+      if (seg.length < quota[t]) lack.push(t + "不足" + quota[t]);
+    });
+    const totalWant = 80;
+    if (picked.length < totalWant) {
+      const rest = pickRandom(
+        pool.filter((q) => !used.has(q.uid)),
+        totalWant - picked.length
+      );
+      rest.forEach((q) => {
+        used.add(q.uid);
+        picked.push(q);
+      });
+    }
+    picked.lackHint = lack.length ? lack.join("；") : "";
+    return picked;
+  }
+
+  function renderExam(main) {
+    const state = JZ.loadState();
+    if (!examSession) {
+      main.innerHTML =
+        '<div class="card"><h2>模拟考试</h2>' +
+        '<p class="muted">默认 40 单选 + 20 多选 + 20 判断；多选全对才算对；交卷后显示答案。</p>' +
+        '<div class="row"><label>模式 <select id="exMode"><option value="classic">标准 80 题</option><option value="randomN">随机 N 题</option></select></label></div>' +
+        '<div class="row"><label>N <input id="exN" type="number" value="20" min="1" style="width:72px" disabled /></label>' +
+        '<label>限时（分） <select id="exMin"><option>30</option><option>60</option><option>90</option><option selected>100</option><option>120</option><option value="0">不限时</option></select></label></div>' +
+        '<div class="row"><label><input type="checkbox" data-type="single" checked /> 单</label>' +
+        '<label><input type="checkbox" data-type="multiple" checked /> 多</label>' +
+        '<label><input type="checkbox" data-type="judge" checked /> 判</label></div>' +
+        '<div class="row"><button class="btn" id="exGo">开始考试</button></div></div>' +
+        '<div class="card"><h2>最近成绩</h2>' +
+        (state.exams.length
+          ? state.exams
+              .map(
+                (e) =>
+                  '<p class="muted">' +
+                  e.at +
+                  " · " +
+                  e.right +
+                  "/" +
+                  e.total +
+                  " · " +
+                  e.modeLabel +
+                  "</p>"
+              )
+              .join("")
+          : '<p class="muted">暂无记录</p>') +
+        "</div>";
+      const mode = document.getElementById("exMode");
+      const nInput = document.getElementById("exN");
+      mode.addEventListener("change", () => {
+        nInput.disabled = mode.value !== "randomN";
+      });
+      document.getElementById("exGo").addEventListener("click", () => {
+        const types = Array.from(
+          main.querySelectorAll("input[data-type]:checked")
+        ).map((x) => x.dataset.type);
+        const opts = {
+          mode: mode.value,
+          n: parseInt(nInput.value || "20", 10),
+          types: types,
+          subject: "all",
+        };
+        const list = assemblePaper(window.BANK, opts);
+        if (!list.length) {
+          alert("题量不足，无法组卷");
+          return;
+        }
+        const minutes = parseInt(document.getElementById("exMin").value, 10);
+        examSession = {
+          list: list,
+          idx: 0,
+          answers: {},
+          deadline: minutes > 0 ? Date.now() + minutes * 60000 : null,
+          modeLabel: opts.mode === "classic" ? "标准卷" : "随机" + opts.n,
+          lackHint: list.lackHint || "",
+          submitted: false,
+          timer: null,
+        };
+        if (examSession.lackHint)
+          alert("题型不足已自动补齐：" + examSession.lackHint);
+        drawExam(main);
+      });
+      return;
+    }
+    drawExam(main);
+  }
+
+  function drawExam(main) {
+    const s = examSession;
+    if (!s || s.submitted) return drawExamResult(main);
+    const q = s.list[s.idx];
+    const left = s.deadline
+      ? Math.max(0, Math.floor((s.deadline - Date.now()) / 1000))
+      : null;
+    const timeTxt =
+      left == null
+        ? "不限时"
+        : "剩余 " +
+          Math.floor(left / 60) +
+          ":" +
+          String(left % 60).padStart(2, "0");
+    main.innerHTML =
+      '<div class="card"><div><span class="badge">' +
+      (TYPE_LABEL[q.type] || "") +
+      '</span><span class="badge">' +
+      (s.idx + 1) +
+      "/" +
+      s.list.length +
+      '</span><span class="badge" id="exClock">' +
+      timeTxt +
+      '</span></div><div class="stem">' +
+      escapeHtml(q.stem) +
+      '</div><div id="opts"></div><div class="row">' +
+      '<button class="btn ghost" id="exPrev">上一题</button>' +
+      '<button class="btn ghost" id="exNext">下一题</button>' +
+      '<button class="btn" id="exSubmit">交卷</button></div></div>';
+    const opts = document.getElementById("opts");
+    const choices =
+      q.type === "judge"
+        ? [
+            { id: "TRUE", value: "正确" },
+            { id: "FALSE", value: "错误" },
+          ]
+        : q.options;
+    const saved = s.answers[q.uid] || [];
+    opts.innerHTML = choices
+      .map((o) => {
+        const sel = saved.indexOf(o.id) >= 0 ? " selected" : "";
+        return (
+          '<button type="button" class="opt' +
+          sel +
+          '" data-id="' +
+          o.id +
+          '">' +
+          o.id +
+          ". " +
+          escapeHtml(o.value) +
+          "</button>"
+        );
+      })
+      .join("");
+    opts.querySelectorAll(".opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        let cur = (s.answers[q.uid] || []).slice();
+        if (q.type === "multiple") {
+          const i = cur.indexOf(id);
+          if (i >= 0) cur.splice(i, 1);
+          else cur.push(id);
+          btn.classList.toggle("selected");
+        } else {
+          cur = [id];
+          opts.querySelectorAll(".opt").forEach((b) =>
+            b.classList.remove("selected")
+          );
+          btn.classList.add("selected");
+        }
+        s.answers[q.uid] = cur;
+      });
+    });
+    document.getElementById("exPrev").addEventListener("click", () => {
+      if (s.idx > 0) s.idx -= 1;
+      drawExam(main);
+    });
+    document.getElementById("exNext").addEventListener("click", () => {
+      if (s.idx < s.list.length - 1) s.idx += 1;
+      drawExam(main);
+    });
+    document
+      .getElementById("exSubmit")
+      .addEventListener("click", () => submitExam(main, false));
+    if (s.deadline) {
+      if (s.timer) clearInterval(s.timer);
+      s.timer = setInterval(() => {
+        if (!examSession || examSession.submitted) return;
+        if (Date.now() >= s.deadline) {
+          clearInterval(s.timer);
+          submitExam(document.getElementById("main"), true);
+        } else {
+          const el = document.getElementById("exClock");
+          if (el) {
+            const sec = Math.max(
+              0,
+              Math.floor((s.deadline - Date.now()) / 1000)
+            );
+            el.textContent =
+              "剩余 " +
+              Math.floor(sec / 60) +
+              ":" +
+              String(sec % 60).padStart(2, "0");
+          }
+        }
+      }, 1000);
+    }
+  }
+
+  function submitExam(main, auto) {
+    const s = examSession;
+    if (!s || s.submitted) return;
+    s.submitted = true;
+    if (s.timer) clearInterval(s.timer);
+    let right = 0;
+    s.list.forEach((q) => {
+      const ok = JZ.scoreAnswer(
+        q.type,
+        s.answers[q.uid] || [],
+        q.answer
+      );
+      if (ok) right += 1;
+    });
+    const state = JZ.loadState();
+    state.exams.unshift({
+      at: new Date().toISOString().slice(0, 16).replace("T", " "),
+      right: right,
+      total: s.list.length,
+      modeLabel: s.modeLabel + (auto ? "（自动交卷）" : ""),
+    });
+    state.exams = state.exams.slice(0, 20);
+    JZ.saveState(state);
+    drawExamResult(main, right, auto);
+  }
+
+  function drawExamResult(main, rightArg, auto) {
+    const s = examSession;
+    if (!s) return renderExam(main);
+    let right = rightArg;
+    if (right == null) {
+      right = s.list.reduce(
+        (n, q) =>
+          n +
+          (JZ.scoreAnswer(q.type, s.answers[q.uid] || [], q.answer) ? 1 : 0),
+        0
+      );
+    }
+    main.innerHTML =
+      '<div class="card"><h2>考试结果' +
+      (auto ? "（到时自动交卷）" : "") +
+      '</h2><p class="stem">' +
+      right +
+      " / " +
+      s.list.length +
+      '</p><div class="row"><button class="btn" id="exDone">返回</button>' +
+      '<button class="btn ghost" id="exToWrong">错题入本</button></div></div>' +
+      s.list
+        .map((q) => {
+          const ok = JZ.scoreAnswer(
+            q.type,
+            s.answers[q.uid] || [],
+            q.answer
+          );
+          const you = (s.answers[q.uid] || []).join("") || "—";
+          return (
+            '<div class="card"><div><span class="badge">' +
+            (ok ? "对" : "错") +
+            '</span><span class="badge">' +
+            (TYPE_LABEL[q.type] || "") +
+            '</span></div><div class="stem">' +
+            escapeHtml(q.stem) +
+            '</div><p class="muted">你的答案 ' +
+            escapeHtml(you) +
+            " · 正确 " +
+            escapeHtml(q.answer.join("")) +
+            "</p></div>"
+          );
+        })
+        .join("");
+    document.getElementById("exDone").addEventListener("click", () => {
+      examSession = null;
+      renderExam(main);
+    });
+    document.getElementById("exToWrong").addEventListener("click", () => {
+      const state = JZ.loadState();
+      s.list.forEach((q) => {
+        if (!JZ.scoreAnswer(q.type, s.answers[q.uid] || [], q.answer))
+          addWrong(state, q);
+      });
+      JZ.saveState(state);
+      alert("错题已入本");
+    });
+  }
+
+  function renderMe(main) {
+    const state = JZ.loadState();
+    const total = window.BANK.length;
+    main.innerHTML =
+      '<div class="card"><h2>我的</h2>' +
+      '<p class="muted">题库 ' +
+      total +
+      " 题 · 错题 " +
+      state.wrong.length +
+      " · 模考记录 " +
+      state.exams.length +
+      '</p><p class="muted">多选计分：全对才算对（固定）</p>' +
+      '<label><input type="checkbox" id="autoOff" ' +
+      (state.settings.autoRemoveWrong ? "checked" : "") +
+      " /> 错题做对后自动移出</label>" +
+      '<div class="row"><button class="btn danger" id="clearAll">清空进度与错题</button></div></div>';
+    document.getElementById("autoOff").addEventListener("change", (e) => {
+      state.settings.autoRemoveWrong = e.target.checked;
+      JZ.saveState(state);
+    });
+    document.getElementById("clearAll").addEventListener("click", () => {
+      if (!confirm("确认清空错题与进度？")) return;
+      const s = emptyState();
+      s.settings = state.settings;
+      JZ.saveState(s);
+      renderMe(main);
+    });
+  }
+
+  document.getElementById("tabbar").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-tab]");
+    if (btn) {
+      if (btn.dataset.tab !== "practice") practiceSession = practiceSession;
+      if (btn.dataset.tab !== "exam") {
+        /* keep exam session if in exam */
+      }
+      showTab(btn.dataset.tab);
+    }
+  });
+
+  window.JZ = {
+    scoreAnswer: scoreAnswer,
+    loadState: loadState,
+    saveState: saveState,
+    showTab: showTab,
+    bankReady: bankReady,
+    TYPE_LABEL: TYPE_LABEL,
+    assemblePaper: assemblePaper,
+    pickRandom: pickRandom,
+  };
+  showTab("practice");
+})();
+</script>
+</body>
+</html>
