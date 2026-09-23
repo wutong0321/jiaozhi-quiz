@@ -9,6 +9,7 @@ on:
       - "bank.js"
       - "assets/**"
       - "manifest.json"
+      - ".github/workflows/build-apk.yml"
 
 jobs:
   apk:
@@ -27,26 +28,25 @@ jobs:
           mkdir -p android/app/src/main/assets/www/assets/icons
           cp index.html bank.js manifest.json android/app/src/main/assets/www/
           cp assets/design-tokens.css android/app/src/main/assets/www/assets/
-          cp assets/empty-state.png android/app/src/main/assets/www/assets/ 2>/dev/null || true
+          cp assets/empty-state.png android/app/src/main/assets/www/assets/
           cp assets/icons/icon-192.png assets/icons/icon-512.png assets/icons/apple-touch-icon.png \
             android/app/src/main/assets/www/assets/icons/
-          # file:// 下不依赖 service worker，避免安装异常
+          # file:// 加载，避免 service worker 干扰
           rm -f android/app/src/main/assets/www/sw.js
 
-      - name: Grant execute for gradlew
+      - name: Install Gradle 8.5
         run: |
-          if [ -f android/gradlew ]; then chmod +x android/gradlew; fi
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.5-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          echo "/tmp/gradle-8.5/bin" >> $GITHUB_PATH
 
-      - name: Build debug APK
+      - name: Accept Android SDK licenses & install platform
         uses: android-actions/setup-android@v3
 
-      - name: Build with Gradle
+      - name: Build debug APK
         working-directory: android
         run: |
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.5
-          fi
-          ./gradlew assembleDebug
+          gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
