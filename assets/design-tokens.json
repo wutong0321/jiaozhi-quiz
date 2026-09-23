@@ -1,0 +1,101 @@
+{
+  "name": "jiaozhi-quiz",
+  "primitive": {
+    "color": {
+      "violet-600": "#7C3AED",
+      "violet-500": "#8B5CF6",
+      "violet-50": "#FAF5FF",
+      "violet-100": "#F7F3FD",
+      "violet-100-border": "#EFE7FC",
+      "emerald-600": "#059669",
+      "slate-900": "#0F172A",
+      "slate-600": "#475569",
+      "slate-500": "#64748B",
+      "white": "#FFFFFF",
+      "red-600": "#DC2626",
+      "amber-500": "#D97706"
+    },
+    "space": {
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px",
+      "12": "48px"
+    },
+    "radius": {
+      "sm": "8px",
+      "md": "12px",
+      "lg": "16px",
+      "xl": "20px",
+      "pill": "999px"
+    },
+    "font": {
+      "sans": "Inter, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif",
+      "mono": "ui-monospace, 'SF Mono', Menlo, monospace"
+    },
+    "text": {
+      "xs": "12px",
+      "sm": "13px",
+      "base": "15px",
+      "md": "16px",
+      "lg": "18px",
+      "xl": "22px",
+      "2xl": "28px"
+    },
+    "shadow": {
+      "sm": "0 1px 2px rgba(15,23,42,0.05)",
+      "md": "0 8px 24px rgba(15,23,42,0.08)",
+      "nav": "0 12px 32px rgba(124,58,237,0.16)"
+    }
+  },
+  "semantic": {
+    "color-primary": "{color.violet-600}",
+    "color-on-primary": "{color.white}",
+    "color-secondary": "{color.violet-500}",
+    "color-accent": "{color.emerald-600}",
+    "color-on-accent": "{color.white}",
+    "color-background": "{color.violet-50}",
+    "color-foreground": "{color.slate-900}",
+    "color-card": "{color.white}",
+    "color-muted": "{color.violet-100}",
+    "color-muted-foreground": "{color.slate-600}",
+    "color-border": "{color.violet-100-border}",
+    "color-destructive": "{color.red-600}",
+    "color-success": "{color.emerald-600}",
+    "color-warning": "{color.amber-500}",
+    "color-ring": "{color.violet-600}",
+    "space-page": "{space.4}",
+    "space-card": "{space.5}",
+    "space-stack": "{space.3}",
+    "radius-card": "{radius.lg}",
+    "radius-control": "{radius.md}",
+    "radius-option": "{radius.md}",
+    "font-sans": "{font.sans}",
+    "text-body": "{text.base}",
+    "text-title": "{text.lg}",
+    "text-display": "{text.xl}"
+  },
+  "component": {
+    "button-bg": "{semantic.color-primary}",
+    "button-fg": "{semantic.color-on-primary}",
+    "button-radius": "{semantic.radius-control}",
+    "button-pad-y": "{primitive.space.3}",
+    "button-pad-x": "{primitive.space.4}",
+    "card-bg": "{semantic.color-card}",
+    "card-border": "{semantic.color-border}",
+    "card-radius": "{semantic.radius-card}",
+    "card-shadow": "{primitive.shadow.sm}",
+    "option-bg": "{semantic.color-card}",
+    "option-border": "{semantic.color-border}",
+    "option-selected-bg": "{primitive.color.violet-100}",
+    "option-selected-border": "{semantic.color-primary}",
+    "option-correct-bg": "#E8F8F0",
+    "option-wrong-bg": "#FEECEC",
+    "tab-height": "64px",
+    "hit-min": "48px"
+  }
+}
