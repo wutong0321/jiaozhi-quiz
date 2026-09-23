@@ -114,3 +114,94 @@ def normalize_question(raw: dict, subject: str, exercise_meta: dict) -> dict | N
             }
         ],
     }
+
+
+def content_key(q: dict) -> str:
+    payload = json.dumps(
+        {
+            "stem": q.get("stem"),
+            "type": q.get("type"),
+            "answer": q.get("answer"),
+            "options": q.get("options") or [],
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _fullness(q: dict) -> int:
+    n = 0
+    for k in ("stem", "keyPoint", "answer", "options", "sourceOldId", "difficulty"):
+        v = q.get(k)
+        if v not in (None, "", [], 0):
+            n += 1
+    n += len(q.get("sources") or [])
+    return n
+
+
+def _same_content(a: dict, b: dict) -> bool:
+    return content_key(a) == content_key(b)
+
+
+def dedupe(items: list[dict]) -> tuple[list[dict], dict]:
+    report = {"merged": 0, "conflicts": [], "dropped_no_uid": 0}
+    by_old: dict[str, dict] = {}
+    by_hash: dict[str, dict] = {}
+    ordered: list[dict] = []
+
+    def merge_into(slot: dict, incoming: dict) -> None:
+        report["merged"] += 1
+        prefer_incoming = _fullness(incoming) > _fullness(slot)
+        slot["sources"].extend(incoming.get("sources") or [])
+        if _same_content(slot, incoming) and slot.get("answer") == incoming.get("answer"):
+            return
+        if prefer_incoming:
+            srcs = slot["sources"]
+            kept_uid = slot.get("uid") or incoming.get("uid")
+            slot.clear()
+            slot.update(incoming)
+            slot["sources"] = srcs
+            slot["uid"] = kept_uid
+        report["conflicts"].append(
+            {
+                "uid": slot.get("uid"),
+                "kept": {k: slot.get(k) for k in ("answer", "keyPoint", "stem")},
+                "dropped": {k: incoming.get(k) for k in ("answer", "keyPoint", "stem")},
+                "reason": "answer_or_fields_differ",
+            }
+        )
+
+    for item in items:
+        old_id = item.get("sourceOldId")
+        key_old = f"old:{old_id}" if old_id is not None else None
+        h = content_key(item)
+        if key_old and key_old in by_old:
+            merge_into(by_old[key_old], item)
+            continue
+        if h in by_hash:
+            merge_into(by_hash[h], item)
+            if key_old:
+                by_old[key_old] = by_hash[h]
+            continue
+        matched = None
+        for prev in ordered:
+            if _same_content(prev, item) and prev.get("subject") == item.get("subject"):
+                matched = prev
+                break
+        if matched is not None:
+            merge_into(matched, item)
+            continue
+        stored = dict(item)
+        stored["sources"] = list(item.get("sources") or [])
+        if key_old:
+            stored["uid"] = key_old
+        else:
+            stored["uid"] = f"hash:{h[:16]}"
+        ordered.append(stored)
+        by_hash[h] = stored
+        if key_old:
+            by_old[key_old] = stored
+
+    return ordered, report

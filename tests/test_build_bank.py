@@ -81,6 +81,101 @@ class TestParse(unittest.TestCase):
         }
         self.assertIsNone(normalize_question(raw_blank, "edu", {"exerciseId": 3, "exerciseName": "e"}))
 
+    def test_dedupe_by_old_id_merges_sources(self):
+        from build_bank import dedupe
+
+        a = {
+            "uid": "old:1",
+            "sourceOldId": 1,
+            "subject": "edu",
+            "type": "single",
+            "stem": "题干一",
+            "options": [{"id": "A", "value": "1"}, {"id": "B", "value": "2"}],
+            "answer": ["A"],
+            "keyPoint": "k1",
+            "difficulty": 1,
+            "importance": 1,
+            "sources": [{"exerciseId": 1, "exerciseName": "e1", "questionId": 1}],
+        }
+        b = {
+            "uid": "old:1",
+            "sourceOldId": 1,
+            "subject": "edu",
+            "type": "single",
+            "stem": "题干一",
+            "options": [{"id": "A", "value": "1"}, {"id": "B", "value": "2"}],
+            "answer": ["A"],
+            "keyPoint": "k1",
+            "difficulty": 1,
+            "importance": 1,
+            "sources": [{"exerciseId": 2, "exerciseName": "e2", "questionId": 5}],
+        }
+        bank, report = dedupe([a, b])
+        self.assertEqual(len(bank), 1)
+        self.assertEqual(len(bank[0]["sources"]), 2)
+        self.assertEqual(report["merged"], 1)
+
+    def test_dedupe_by_content_when_no_old_id(self):
+        from build_bank import content_key, dedupe
+
+        base = {
+            "uid": None,
+            "sourceOldId": None,
+            "subject": "edu",
+            "type": "judge",
+            "stem": "对错题干",
+            "options": [],
+            "answer": ["TRUE"],
+            "keyPoint": "k",
+            "difficulty": 1,
+            "importance": 1,
+            "sources": [{"exerciseId": 1, "exerciseName": "e1", "questionId": 1}],
+        }
+        other = {
+            **base,
+            "sources": [{"exerciseId": 2, "exerciseName": "e2", "questionId": 9}],
+        }
+        self.assertEqual(content_key(base), content_key(other))
+        bank, report = dedupe([base, other])
+        self.assertEqual(len(bank), 1)
+        self.assertEqual(report["merged"], 1)
+
+    def test_conflict_keeps_fuller_and_reports(self):
+        from build_bank import dedupe
+
+        thin = {
+            "uid": "old:2",
+            "sourceOldId": 2,
+            "subject": "edu",
+            "type": "single",
+            "stem": "冲突题",
+            "options": [{"id": "A", "value": "1"}],
+            "answer": ["A"],
+            "keyPoint": "",
+            "difficulty": 1,
+            "importance": 1,
+            "sources": [{"exerciseId": 1, "exerciseName": "e1", "questionId": 1}],
+        }
+        full = {
+            "uid": "old:2",
+            "sourceOldId": 2,
+            "subject": "edu",
+            "type": "single",
+            "stem": "冲突题",
+            "options": [{"id": "A", "value": "1"}],
+            "answer": ["B"],
+            "keyPoint": "有知识点",
+            "difficulty": 2,
+            "importance": 1,
+            "sources": [{"exerciseId": 2, "exerciseName": "e2", "questionId": 2}],
+        }
+        bank, report = dedupe([thin, full])
+        self.assertEqual(len(bank), 1)
+        self.assertEqual(bank[0]["answer"], ["B"])
+        self.assertEqual(bank[0]["keyPoint"], "有知识点")
+        self.assertEqual(len(report["conflicts"]), 1)
+        self.assertEqual(report["conflicts"][0]["reason"], "answer_or_fields_differ")
+
 
 if __name__ == "__main__":
     unittest.main()
