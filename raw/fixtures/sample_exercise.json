@@ -1,0 +1,13 @@
+{
+  "exerciseId": 1,
+  "exerciseUuid": "fixture-uuid",
+  "exerciseName": "高等教育学-练习FIX",
+  "courseId": 66,
+  "questionAmount": 3,
+  "singleAmount": 2,
+  "multipleAmount": 0,
+  "judgeAmount": 1,
+  "canExamTime": 100,
+  "questions": "[{\"questionDesc\":\"美国哈佛学院创建于（　）年。\",\"questionId\":1,\"questionIdOld\":27183,\"questionType\":1,\"subjectId\":64,\"keyPoint\":\"美国大学\",\"difficultyLevel\":1,\"importanceLevel\":1,\"options\":\"[{\\\"id\\\":\\\"A\\\",\\\"value\\\":\\\"1636\\\"},{\\\"id\\\":\\\"B\\\",\\\"value\\\":\\\"1646\\\"}]\"},{\"questionDesc\":\"下面说法正确的是（）。\",\"questionId\":2,\"questionIdOld\":27374,\"questionType\":1,\"subjectId\":64,\"keyPoint\":\"专业学科\",\"difficultyLevel\":1,\"importanceLevel\":1,\"options\":\"[{\\\"id\\\":\\\"A\\\",\\\"value\\\":\\\"错项\\\"},{\\\"id\\\":\\\"B\\\",\\\"value\\\":\\\"对项\\\"}]\"},{\"questionDesc\":\"政治制约着高等教育体制。\",\"questionId\":3,\"questionIdOld\":27707,\"questionType\":3,\"subjectId\":64,\"keyPoint\":\"政治\",\"difficultyLevel\":1,\"importanceLevel\":1,\"options\":\"[]\"}]",
+  "answers": "[{\"questionId\":\"1\",\"answer\":\"A\"},{\"questionId\":\"2\",\"answer\":\"B\"},{\"questionId\":\"3\",\"answer\":\"TRUE\"}]"
+}
