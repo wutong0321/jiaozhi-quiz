@@ -451,6 +451,52 @@
     outline: 2px solid var(--color-ring);
     outline-offset: 1px;
   }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 24px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-card {
+    width: min(360px, 100%);
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+  }
+  .modal-card h3 {
+    margin: 0 0 8px;
+    font-size: var(--text-md);
+  }
+  .modal-card p {
+    margin: 0 0 16px;
+    color: var(--color-muted-foreground);
+    font-size: var(--text-base);
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 100px;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    max-width: 80vw;
+  }
+  .toast.show { opacity: 1; }
   .result-line {
     display: flex;
     align-items: center;
@@ -523,6 +569,17 @@
     <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>我的
   </button>
 </nav>
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div class="modal-card">
+    <h3 id="modalTitle">确认</h3>
+    <p id="modalMsg"></p>
+    <div class="row" style="margin-top:0">
+      <button type="button" class="btn ghost" id="modalCancel">取消</button>
+      <button type="button" class="btn" id="modalOk">确定</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="bank.js"></script>
 <script>
 (function () {
@@ -617,7 +674,7 @@
     try {
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
     } catch (e) {
-      alert("进度保存失败，已尝试继续");
+      showToast("进度保存失败，已尝试继续");
     }
   }
 
@@ -673,6 +730,45 @@
     state.wrong = state.wrong.filter((x) => x !== uid);
   }
 
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => el.classList.remove("show"), 1800);
+  }
+
+  function showConfirm(message, onOk) {
+    const modal = document.getElementById("modal");
+    const msg = document.getElementById("modalMsg");
+    const ok = document.getElementById("modalOk");
+    const cancel = document.getElementById("modalCancel");
+    if (!modal || !ok || !cancel) {
+      // last-resort: never block submit on missing dialog
+      onOk();
+      return;
+    }
+    msg.textContent = message;
+    modal.hidden = false;
+    modal.classList.add("open");
+    function close() {
+      modal.classList.remove("open");
+      modal.hidden = true;
+      ok.removeEventListener("click", onYes);
+      cancel.removeEventListener("click", onNo);
+    }
+    function onYes() {
+      close();
+      onOk();
+    }
+    function onNo() {
+      close();
+    }
+    ok.addEventListener("click", onYes);
+    cancel.addEventListener("click", onNo);
+  }
+
   function showTab(name) {
     document.querySelectorAll("#tabbar button").forEach((b) => {
       const on = b.dataset.tab === name;
@@ -709,7 +805,7 @@
 
   function startSession(list, subject, modeLabel) {
     if (!list.length) {
-      alert("该科暂无题");
+      showToast("该科暂无题");
       return;
     }
     practiceSession = {
@@ -1130,7 +1226,7 @@
         };
         const list = assemblePaper(window.BANK, opts);
         if (!list.length) {
-          alert("题量不足，无法组卷");
+          showToast("题量不足，无法组卷");
           return;
         }
         const minutes = parseInt(document.getElementById("exMin").value, 10);
@@ -1145,7 +1241,7 @@
           timer: null,
         };
         if (examSession.lackHint)
-          alert("题型不足已自动补齐：" + examSession.lackHint);
+          showToast("题型不足已补齐：" + examSession.lackHint);
         drawExam(main);
       });
       return;
@@ -1312,8 +1408,7 @@
         remain > 0
           ? "还有 " + remain + " 题未作答，确认交卷？"
           : "确认交卷？交卷后不可修改答案。";
-      if (!confirm(msg)) return;
-      submitExam(main, false);
+      showConfirm(msg, () => submitExam(main, false));
     });
     if (s.deadline) {
       if (s.timer) clearInterval(s.timer);
@@ -1417,7 +1512,7 @@
           addWrong(state, q);
       });
       JZ.saveState(state);
-      alert("错题已入本");
+      showToast("错题已入本");
     });
   }
 
@@ -1532,11 +1627,13 @@
       JZ.saveState(state);
     });
     document.getElementById("clearAll").addEventListener("click", () => {
-      if (!confirm("确认清空错题、进度与学习数据？")) return;
-      const s = emptyState();
-      s.settings = state.settings;
-      JZ.saveState(s);
-      renderMe(main);
+      showConfirm("确认清空错题、进度与学习数据？", () => {
+        const s = emptyState();
+        s.settings = state.settings;
+        JZ.saveState(s);
+        renderMe(main);
+        showToast("已清空");
+      });
     });
   }
 
